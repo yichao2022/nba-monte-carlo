@@ -84,7 +84,10 @@ No API key required — data sourced from ESPN's public endpoints.
 |------|--------|----|----------|------|--------|
 | G4 | Knicks 107-106 | ✓ Closely tracked | ✗ Failed (uncalibrated) | ✓ | MC + ESPN |
 
-The model was validated in real-time during the 2026 NBA Finals, correctly capturing the Knicks' comeback from 24 down.
+*The model was validated in real-time during the 2026 NBA Finals, correctly capturing the Knicks' comeback from 24 down.*
+
+![G4 Three-Model Comparison](results/nba_g4_three_model_comparison.png)
+*G4: MC (blue) tracks ESPN (green) closely; Logistic (orange) fails before 4Q calibration.*
 
 ---
 
