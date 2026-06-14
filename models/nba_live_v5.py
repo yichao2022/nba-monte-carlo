@@ -11,9 +11,11 @@ NBA 实时胜率预测 v5 — Logistic 回归 + 蒙特卡洛双引擎
   python3 nba_live_v5.py              → 当前比赛
   python3 nba_live_v5.py --watch      → 每15秒自动刷新
   python3 nba_live_v5.py --mc         → 仅蒙特卡洛模式
-"""
 
-import numpy as np
+⚠️ DISCLAIMER: For educational/research purposes only.
+NOT for gambling or betting. Use at your own risk.
+Full disclaimer: see DISCLAIMER.md
+"""
 import json, sys, time, os
 import urllib.request
 from typing import Dict, Optional

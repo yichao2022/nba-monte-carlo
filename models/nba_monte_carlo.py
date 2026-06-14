@@ -4,6 +4,10 @@ NBA 实时胜率预测模型 v4
 ========================
 方法: 贝叶斯收缩投篮命中率 + 蒙特卡洛模拟
 数据源: ESPN 公共 API
+
+⚠️ DISCLAIMER: For educational/research purposes only.
+NOT for gambling or betting. Use at your own risk.
+Full disclaimer: see DISCLAIMER.md
 """
 
 import numpy as np

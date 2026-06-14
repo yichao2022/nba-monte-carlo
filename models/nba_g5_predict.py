@@ -2,6 +2,10 @@
 """
 NBA Finals G5 赛前预测 — Knicks @ Spurs
 方法: 蒙特卡洛 + 系列赛数据校准
+
+⚠️ DISCLAIMER: For educational/research purposes only.
+NOT for gambling or betting. Use at your own risk.
+Full disclaimer: see DISCLAIMER.md
 """
 import numpy as np
 
