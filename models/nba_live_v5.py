@@ -294,7 +294,7 @@ def fetch_espn_wp() -> Optional[Dict]:
 # 6. 输出
 # ═════════════════════════════════════════════
 
-def print_prediction(log_r: Optional[Dict] = None, mc_r: Optional[Dict] = None, espn_wp: Optional[Dict] = None):
+def print_prediction(log_r: Optional[Dict] = None, mc_r: Optional[Dict] = None, espn_wp: Optional[Dict] = None, game: Optional[Dict] = None):
     """格式化输出两个引擎的结果"""
     print(f"\n{'='*52}")
     
@@ -302,6 +302,13 @@ def print_prediction(log_r: Optional[Dict] = None, mc_r: Optional[Dict] = None, 
     if not log_r:
         print(f"  🏀 NBA 实时胜率预测 v5")
         print(f"  {'='*48}")
+        if game:
+            detail = game.get('detail', '')
+            teams = game.get('teams', {})
+            sa_score = teams.get('SA', {}).get('score', '?')
+            ny_score = teams.get('NY', {}).get('score', '?')
+            print(f"  {detail} | SA {sa_score} — {ny_score} NY")
+            print(f"  {'='*48}")
         print(f"  ℹ️ Logistic: --q4only 模式, 第四节才启用")
         if mc_r:
             print(f"\n  🎲 蒙特卡洛 (10,000次) [辅]")
@@ -421,7 +428,7 @@ def main():
                 print(f"{'─'*52}")
                 print(log_line)
             else:
-                print_prediction(log_r, mc_r, espn_wp)
+                print_prediction(log_r, mc_r, espn_wp, game)
             
             if not watch_mode:
                 break
