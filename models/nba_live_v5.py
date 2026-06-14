@@ -294,8 +294,26 @@ def fetch_espn_wp() -> Optional[Dict]:
 # 6. 输出
 # ═════════════════════════════════════════════
 
-def print_prediction(log_r: Dict, mc_r: Optional[Dict] = None, espn_wp: Optional[Dict] = None):
+def print_prediction(log_r: Optional[Dict] = None, mc_r: Optional[Dict] = None, espn_wp: Optional[Dict] = None):
     """格式化输出两个引擎的结果"""
+    print(f"\n{'='*52}")
+    
+    # Non-watch mode with q4only: show MC + ESPN even without Logistic
+    if not log_r:
+        print(f"  🏀 NBA 实时胜率预测 v5")
+        print(f"  {'='*48}")
+        print(f"  ℹ️ Logistic: --q4only 模式, 第四节才启用")
+        if mc_r:
+            print(f"\n  🎲 蒙特卡洛 (10,000次) [辅]")
+            print(f"  {mc_r['home']:<18}: {mc_r['p_home']:>5.1f}%")
+            print(f"  {mc_r['away']:<18}: {mc_r['p_away']:>5.1f}%")
+        if espn_wp:
+            print(f"\n  🏢 ESPN 官方")
+            print(f"  ESPN{'':<14}: {espn_wp['p_home']:>5.1f}%")
+            print(f"  Opp{'':<15}: {espn_wp['p_away']:>5.1f}%")
+        print(f"{'='*52}")
+        return
+    
     home, away = log_r['home'], log_r['away']
     
     print(f"\n{'='*52}")
@@ -351,10 +369,13 @@ def print_prediction(log_r: Dict, mc_r: Optional[Dict] = None, espn_wp: Optional
 def main():
     watch_mode = '--watch' in sys.argv
     mc_only = '--mc' in sys.argv
+    q4_only = '--q4only' in sys.argv
     
     print(f"\n{'='*52}")
     print(f"  NBA 实时胜率预测引擎 v5")
-    print(f"  Logistic + MC 双引擎")
+    engines = "Logistic + MC 双引擎"
+    if q4_only: engines = "MC + ESPN (Logistic 仅第四节启用)"
+    print(f"  {engines}")
     print(f"{'='*52}")
     
     if watch_mode:
@@ -370,8 +391,14 @@ def main():
             if game['is_finished']:
                 print(f"  🏁 比赛已结束!")
             
-            # Logistic (快, 必跑)
-            log_r = logistic_win_prob(game)
+            period = game.get('period', 1)
+            
+            # Logistic — 如果 --q4only 且还没到第四节, 跳过
+            log_r = None
+            if q4_only and period < 4:
+                pass  # 第四节才启用
+            else:
+                log_r = logistic_win_prob(game)
             
             # MC (跑少一点次数)
             mc_r = None
@@ -386,10 +413,13 @@ def main():
             # 增量输出 (不刷屏, 带时间戳)
             if watch_mode:
                 ts = time.strftime('%H:%M:%S')
+                log_line = f"  🎲 MC  {mc_r['p_home']:>5.1f}%  |  🏢 ESPN  {(espn_wp['p_home'] if espn_wp else 0):>5.1f}%"
+                if log_r:
+                    log_line = f"  📐 Logistic  {log_r['p_home']:>5.1f}%  |" + log_line
                 print(f"\n{'─'*52}")
                 print(f"  ⏱ {ts} | {game['detail']} | SA {game['teams']['SA']['score']} — {game['teams']['NY']['score']} NY")
                 print(f"{'─'*52}")
-                print(f"  📐 Logistic  {log_r['p_home']:>5.1f}%  |  🎲 MC  {mc_r['p_home']:>5.1f}%  |  🏢 ESPN  {(espn_wp['p_home'] if espn_wp else 0):>5.1f}%")
+                print(log_line)
             else:
                 print_prediction(log_r, mc_r, espn_wp)
             
