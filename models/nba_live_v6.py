@@ -37,30 +37,109 @@ PLAYER_IMPACT, DEFAULT_IMPACT = _load_weights()
 # 方法: 场上5人影响因子的均值, 范围压缩到 [0.97, 1.03]
 # 即最多调整 ±3% 的进攻效率
 
-def parse_lineup(game_id='401859967'):
-    """从 ESPN summary API 解析当前场上阵容"""
-    url = f"https://site.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event={game_id}"
-    try:
-        with urllib.request.urlopen(url, timeout=5) as r:
-            d = json.load(r)
-    except:
-        return None, None
+# ═════════════════════════════════════════════
+# 阵容推导 (从替换人事件追踪)
+# ═════════════════════════════════════════════
+# 替代 athlete.active 方法, 更可靠的直播阵容
+# 移植自 nba-on-court (shufinskiy) 的核心算法
+
+def _parse_team_id_map(data):
+    m = {}
+    for comp in data.get('header', {}).get('competitions', []):
+        for c in comp.get('competitors', []):
+            m[c['team']['id']] = c['team']['abbreviation']
+    return m
+
+def _parse_player_id_map(data):
+    m = {}
+    for team_data in data.get('boxscore', {}).get('players', []):
+        for sl in team_data.get('statistics', []):
+            for a in sl.get('athletes', []):
+                ath = a.get('athlete', {})
+                pid = ath.get('id')
+                name = ath.get('displayName')
+                if pid and name:
+                    m[pid] = name
+    return m
+
+def derive_lineup_from_data(data, game_id='401859967'):
+    """
+    从已获取的 ESPN summary 数据推导场上阵容。
+    返回 {abbr: {'on_court': [names], 'bench': [names]}}
+    """
+    team_ids = _parse_team_id_map(data)
+    player_names = _parse_player_id_map(data)
     
-    try:
-        players_data = d.get('boxscore', {}).get('players', [])
-        lineups = {}
-        for team_data in players_data:
-            team = team_data.get('team', {}).get('abbreviation', '??')
-            athletes = team_data.get('statistics', [{}])[0].get('athletes', [])
-            on_court = [a for a in athletes if a.get('active') and not a.get('didNotPlay')]
-            bench = [a for a in athletes if not a.get('active') and not a.get('didNotPlay') and not a.get('starter')]
+    # 获取每队的首发/替补列表
+    starters = {}
+    bench_players = {}
+    for team_data in data.get('boxscore', {}).get('players', []):
+        team_info = team_data.get('team', {})
+        tid = str(team_info.get('id', ''))
+        abbr = team_ids.get(tid, '??')
+        if not abbr or abbr == '??': continue
+        
+        starters.setdefault(abbr, [])
+        bench_players.setdefault(abbr, [])
+        for sl in team_data.get('statistics', []):
+            for a in sl.get('athletes', []):
+                if a.get('didNotPlay'): continue
+                pid = a.get('athlete', {}).get('id')
+                if pid:
+                    if a.get('starter'):
+                        starters[abbr].append(pid)
+                    else:
+                        bench_players[abbr].append(pid)
+    
+    # 初始化场上阵容: 首发5人
+    on_court = {}
+    for team in starters:
+        on_court[team] = set(starters[team][:5])
+    
+    # 处理替换人事件
+    plays = data.get('plays', [])
+    subs = []
+    for p in plays:
+        if p.get('type', {}).get('text') == 'Substitution':
+            period = p.get('period', {}).get('number', 1)
+            seq = int(p.get('sequenceNumber', 0))
+            c = p.get('clock', {}).get('displayValue', '12:00')
+            parts = c.split(':')
+            clock_sec = int(parts[0])*60 + int(parts[1]) if len(parts)==2 else 0
             
-            names_on = [a['athlete']['displayName'] for a in on_court]
-            names_bench = [a['athlete']['displayName'] for a in bench]
-            lineups[team] = {'on_court': names_on, 'bench': names_bench}
-        return lineups.get('SA'), lineups.get('NY')
-    except:
-        return None, None
+            participants = p.get('participants', [])
+            if len(participants) >= 2:
+                p_in = str(participants[0].get('athlete', {}).get('id'))
+                p_out = str(participants[1].get('athlete', {}).get('id'))
+                t_id = str(p.get('team', {}).get('id', ''))
+                team = team_ids.get(t_id, '??')
+                if team != '??':
+                    subs.append((period, -clock_sec, seq, team, p_in, p_out))
+    
+    subs.sort()
+    
+    # 应用换人
+    for _, _, _, team, p_in, p_out in subs:
+        if team not in on_court:
+            continue
+        if p_out in on_court[team] and p_in not in on_court[team]:
+            on_court[team].discard(p_out)
+            on_court[team].add(p_in)
+    
+    # 构建返回值
+    result = {}
+    for team in on_court:
+        all_pids = set(starters.get(team, []) + bench_players.get(team, []))
+        on_names, bench_names = [], []
+        for pid in all_pids:
+            name = player_names.get(pid, f'ID:{pid}')
+            if pid in on_court[team]:
+                on_names.append(name)
+            else:
+                bench_names.append(name)
+        result[team] = {'on_court': on_names[:5], 'bench': bench_names[:5]}
+    
+    return result.get('SA'), result.get('NY')
 
 def lineup_adjustment(lineup_data):
     """
@@ -87,9 +166,12 @@ def lineup_adjustment(lineup_data):
     return factor
 
 
-def fetch_lineup_adjustments():
+def fetch_lineup_adjustments(summary_data=None):
     """获取阵容调整; 返回 (sa_factor, ny_factor, sa_lu, ny_lu)"""
-    sa_lu, ny_lu = parse_lineup()
+    if summary_data:
+        sa_lu, ny_lu = derive_lineup_from_data(summary_data)
+    else:
+        sa_lu, ny_lu = None, None
     sa_f = lineup_adjustment(sa_lu)
     ny_f = lineup_adjustment(ny_lu)
     return sa_f, ny_f, sa_lu, ny_lu
@@ -144,7 +226,7 @@ def shrink(gm, ga, sp, k=10):
     if ga == 0: return sp
     return min((gm + k * sp) / (ga + k), 0.85)
 
-def mc_with_lineup(game, n=10000, seed=42):
+def mc_with_lineup(game, n=10000, seed=42, summary_data=None):
     teams = game['teams']
     t1, t2 = list(teams.keys())[0], list(teams.keys())[1]
     home = [t for t in [t1, t2] if teams[t]['home_away'] == 'home'][0]
@@ -167,8 +249,8 @@ def mc_with_lineup(game, n=10000, seed=42):
             'fr': shrink(s.get('freeThrowsAttempted',0), s.get('fieldGoalsAttempted',0), 0.21, 15),
         }
     
-    # ═══ 阵容因子 ═══
-    sa_factor, ny_factor, sa_lu, ny_lu = fetch_lineup_adjustments()
+    # ═══ 阵容因子 (从替换人事件推导) ═══
+    sa_factor, ny_factor, sa_lu, ny_lu = fetch_lineup_adjustments(summary_data)
     
     home_factor = sa_factor if home == 'SA' else ny_factor
     away_factor = ny_factor if home == 'SA' else sa_factor
@@ -244,7 +326,12 @@ def print_result(game, mc_h, mc_a, poss, sa_f, ny_f, sa_lu, ny_lu, espn_wp=None)
 # Main
 # ═════════════════════════════════════════════
 
-def fetch_espn_wp():
+def fetch_espn_wp(summary_data=None):
+    if summary_data:
+        wp = summary_data.get('winprobability', [])
+        if wp:
+            hwp = wp[-1].get('homeWinPercentage', 0)
+            return {'p_home': hwp * 100, 'p_away': (1-hwp) * 100}
     try:
         url = "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event=401859967"
         with urllib.request.urlopen(url, timeout=5) as r:
@@ -271,8 +358,16 @@ def main():
                 print("  比赛已结束或无数据")
                 return
             
-            mc_h, mc_a, poss, sa_f, ny_f, sa_lu, ny_lu = mc_with_lineup(game)
-            espn_wp = fetch_espn_wp()
+            # 统一获取 summary 数据 (阵容 + ESPN WP 共用)
+            summary_data = None
+            try:
+                url = "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event=401859967"
+                with urllib.request.urlopen(url, timeout=5) as r:
+                    summary_data = json.load(r)
+            except: pass
+            
+            mc_h, mc_a, poss, sa_f, ny_f, sa_lu, ny_lu = mc_with_lineup(game, summary_data=summary_data)
+            espn_wp = fetch_espn_wp(summary_data)
             
             if watch:
                 ts = time.strftime('%H:%M:%S')
