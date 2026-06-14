@@ -1,0 +1,140 @@
+{
+  "version": 1,
+  "last_updated": "2026-06-13 22:45",
+  "default_impact": 0.99,
+  "prior_strength": 5,
+  "players": {
+    "Victor Wembanyama": {
+      "impact": 1.027,
+      "games": 1,
+      "cum_pm": -3,
+      "cum_min": 38.0
+    },
+    "Jalen Brunson": {
+      "impact": 1.0528,
+      "games": 1,
+      "cum_pm": 10,
+      "cum_min": 41.0
+    },
+    "De'Aaron Fox": {
+      "impact": 1.0188,
+      "games": 1,
+      "cum_pm": 1,
+      "cum_min": 37.0
+    },
+    "Karl-Anthony Towns": {
+      "impact": 1.0028,
+      "games": 1,
+      "cum_pm": -4,
+      "cum_min": 23.0
+    },
+    "OG Anunoby": {
+      "impact": 1.0215,
+      "games": 1,
+      "cum_pm": 2,
+      "cum_min": 33.0
+    },
+    "Mikal Bridges": {
+      "impact": 1.0123,
+      "games": 1,
+      "cum_pm": 6,
+      "cum_min": 39.0
+    },
+    "Josh Hart": {
+      "impact": 1.0308,
+      "games": 1,
+      "cum_pm": 15,
+      "cum_min": 39.0
+    },
+    "Devin Vassell": {
+      "impact": 0.9774,
+      "games": 1,
+      "cum_pm": -11,
+      "cum_min": 39.0
+    },
+    "Stephon Castle": {
+      "impact": 0.9892,
+      "games": 1,
+      "cum_pm": -1,
+      "cum_min": 32.0
+    },
+    "Mitchell Robinson": {
+      "impact": 1.02,
+      "games": 1,
+      "cum_pm": 5,
+      "cum_min": 20.0
+    },
+    "Jeremy Sochan": {
+      "impact": 0.99,
+      "games": 0,
+      "cum_pm": 0,
+      "cum_min": 0
+    },
+    "Keldon Johnson": {
+      "impact": 1.06,
+      "games": 1,
+      "cum_pm": 17,
+      "cum_min": 16.0
+    },
+    "Miles McBride": {
+      "impact": 1.0018,
+      "games": 1,
+      "cum_pm": 3,
+      "cum_min": 13.0
+    },
+    "Julian Champagnie": {
+      "impact": 0.96,
+      "games": 1,
+      "cum_pm": -10,
+      "cum_min": 31.0
+    },
+    "Landry Shamet": {
+      "impact": 0.96,
+      "games": 1,
+      "cum_pm": -14,
+      "cum_min": 13.0
+    },
+    "Cameron Payne": {
+      "impact": 0.98,
+      "games": 0,
+      "cum_pm": 0,
+      "cum_min": 0
+    },
+    "Jose Alvarado": {
+      "impact": 0.96,
+      "games": 1,
+      "cum_pm": -11,
+      "cum_min": 11.0
+    },
+    "Carter Bryant": {
+      "impact": 1.0017,
+      "games": 1,
+      "cum_pm": 2,
+      "cum_min": 6.0
+    },
+    "Luke Kornet": {
+      "impact": 0.96,
+      "games": 1,
+      "cum_pm": -3,
+      "cum_min": 10.0
+    },
+    "Dylan Harper": {
+      "impact": 0.9607,
+      "games": 1,
+      "cum_pm": -12,
+      "cum_min": 31.0
+    },
+    "Jordan Clarkson": {
+      "impact": 1.0317,
+      "games": 1,
+      "cum_pm": 3,
+      "cum_min": 6.0
+    },
+    "Ariel Hukporti": {
+      "impact": 1.06,
+      "games": 1,
+      "cum_pm": 4,
+      "cum_min": 2.0
+    }
+  }
+}

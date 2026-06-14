@@ -14,40 +14,22 @@ import json, sys, time, os
 import urllib.request
 
 # ═════════════════════════════════════════════
-# 球员影响力权重 (校准版)
+# 球员影响力权重 — 从校准文件加载
 # ═════════════════════════════════════════════
-# 原则: 每个球员对球队效率的边际影响 (% 变化)
-# - 超级巨星: ±4% (文班/布伦森级别)
-# - 全明星: ±2% (Fox/KAT/Anunoby)
-# - 合格首发: 1.00 (基线)
-# - 替补轮换: -2%
-#
-# 这些不是PER/EPM的精确值, 而是方向性估计
-# 实际 +/- 数据校准留到 v7
+# 通过 models/calibrate_weights.py 赛后校准更新
+# 前 K 场偏向手动先验, 之后逐步信任实际 +/- 数据
 
-PLAYER_IMPACT = {
-    'Victor Wembanyama': 1.04,    # DPOY, 攻防两端核心影响力
-    'Jalen Brunson': 1.04,        # MVP候选, 尼克斯发动机
-    'De\'Aaron Fox': 1.02,        # 全明星控卫
-    'Karl-Anthony Towns': 1.02,   # 全明星中锋, 空间型5号位
-    'OG Anunoby': 1.02,           # 顶级防守+底角三分
-    'Mikal Bridges': 1.00,        # 铁人3D, 稳定但不爆炸
-    'Josh Hart': 1.00,            # 能量前锋, 拼抢机器
-    'Devin Vassell': 1.00,        # 稳定得分后卫
-    'Stephon Castle': 0.99,       # 新秀, 有闪光但不稳定
-    'Mitchell Robinson': 1.00,    # 护框蓝领
-    'Jeremy Sochan': 0.99,        # 防守活力但进攻拖空间
-    'Keldon Johnson': 1.00,       # 替补得分手
-    'Miles McBride': 0.98,        # 替补控卫
-    'Julian Champagnie': 0.98,    # 双向合同水平
-    'Landry Shamet': 0.98,        # 纯射手, 防守漏洞
-    'Cameron Payne': 0.98,        # 老将替补
-    'Jose Alvarado': 0.99,        # 能量型替补
-    'Carter Bryant': 0.97,        # 新秀/双向
-    'Luke Kornet': 0.98,          # 替补中锋
-}
+WEIGHTS_FILE = os.path.join(os.path.dirname(__file__), 'lineup_weights.json')
 
-DEFAULT_IMPACT = 0.99
+def _load_weights():
+    try:
+        with open(WEIGHTS_FILE) as f:
+            data = json.load(f)
+        return {name: p['impact'] for name, p in data.get('players', {}).items()}, data.get('default_impact', 0.99)
+    except:
+        return {}, 0.99
+
+PLAYER_IMPACT, DEFAULT_IMPACT = _load_weights()
 
 # ═════════════════════════════════════════════
 # 阵容强度计算 (保守版)
