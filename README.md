@@ -48,8 +48,11 @@ Fetches ESPN's proprietary win probability via their public summary API for dire
 | File | Description |
 |------|-------------|
 | `models/nba_live_v5.py` | Triple-engine live predictor (watch mode available) |
+| `models/nba_live_v6.py` | v6 — lineup-enhanced MC (real-time lineup factor from ESPN API) |
 | `models/nba_monte_carlo.py` | Standalone Bayesian MC simulator |
 | `models/nba_g5_predict.py` | Pre-game prediction with series-specific adjustments |
+| `g5_win_prob_chart.png` | G5 post-game: four-engine win probability over time |
+| `g5_quarter_scores.png` | G5 post-game: predicted vs actual quarter-by-quarter scores |
 
 ## Usage
 
@@ -89,11 +92,34 @@ No API key required — data sourced from ESPN's public endpoints.
 | Game | Result | MC | Logistic | ESPN | Winner |
 |------|--------|----|----------|------|--------|
 | G4 | Knicks 107-106 | ✓ Closely tracked | ✗ Failed (uncalibrated) | ✓ | MC + ESPN |
+| G5 | **Knicks 94-90** 🏆 | ✓ v5/v6 tracked well | ✓ Available from Q4 | ✓ | MC + ESPN |
 
 *The model was validated in real-time during the 2026 NBA Finals, correctly capturing the Knicks' comeback from 24 down.*
 
 ![G4 Three-Model Comparison](results/nba_g4_three_model_comparison.png)
 *G4: MC (blue) tracks ESPN (green) closely; Logistic (orange) fails before 4Q calibration.*
+
+---
+
+### G5 Post-Game: Knicks 94-90 Spurs (Series 4-1)
+
+The lineup-enhanced v6 model was tested live during the Knicks' championship-clinching Game 5 win.
+
+**Chart: Win Probability Over Time**
+
+![G5 Win Probability](g5_win_prob_chart.png)
+*Four engines tracked from halftime to final buzzer. Spurs peaked at 98% in Q3 but collapsed in Q4 as Brunson scored 45 points (13 straight in Q4). v6 (red) and v5 (cyan) closely converged; v6 provided additional signal at lineup transitions (e.g., SA bench units without Wembanyama).*
+
+**Chart: Quarter-by-Quarter Score vs Prediction**
+
+![G5 Quarter Scores](g5_quarter_scores.png)
+*Left: Actual scoring by quarter — Spurs dominated Q1 (+10), Knicks answered in Q2 (+5) and Q4 (+11). Right: Predicted vs actual for Q3 and Q4 (the only quarters with explicit predictions). Q3 prediction (27-27) was accurate (actual 30-28); Q4 completely missed Brunson's explosion (predicted 28-27, actual 18-29).*
+
+**Lineup Factor Validation:**
+- ✅ Correctly flagged SA vulnerability during bench units (no Wembanyama/Fox, coefficient 0.988)
+- ✅ Correctly identified NY's full-strength lineup dominance in Q4 (coefficient 1.016 vs SA 1.000)
+- ✅ Impact amplitude (~3% swing) appropriate and non-dominating
+- ❌ Cannot compensate for cold shooting or superstar individual performances (Brunson 45 pts)
 
 ---
 
