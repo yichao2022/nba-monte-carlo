@@ -383,11 +383,15 @@ def main():
             # ESPN
             espn_wp = fetch_espn_wp()
             
-            # 清屏 + 输出
+            # 增量输出 (不刷屏, 带时间戳)
             if watch_mode:
-                os.system('clear' if os.name == 'posix' else 'cls')
-            
-            print_prediction(log_r, mc_r, espn_wp)
+                ts = time.strftime('%H:%M:%S')
+                print(f"\n{'─'*52}")
+                print(f"  ⏱ {ts} | {game['detail']} | SA {game['teams']['SA']['score']} — {game['teams']['NY']['score']} NY")
+                print(f"{'─'*52}")
+                print(f"  📐 Logistic  {log_r['p_home']:>5.1f}%  |  🎲 MC  {mc_r['p_home']:>5.1f}%  |  🏢 ESPN  {(espn_wp['p_home'] if espn_wp else 0):>5.1f}%")
+            else:
+                print_prediction(log_r, mc_r, espn_wp)
             
             if not watch_mode:
                 break
