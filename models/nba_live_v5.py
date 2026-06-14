@@ -16,6 +16,7 @@ NBA 实时胜率预测 v5 — Logistic 回归 + 蒙特卡洛双引擎
 NOT for gambling or betting. Use at your own risk.
 Full disclaimer: see DISCLAIMER.md
 """
+import numpy as np
 import json, sys, time, os
 import urllib.request
 from typing import Dict, Optional
@@ -30,7 +31,7 @@ def fetch_game(game_id: Optional[str] = None) -> Dict:
     if game_id:
         url = f"https://site.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event={game_id}"
     else:
-        url = "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard?dates=20260610"
+        url = "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard?dates=20260613"
     
     with urllib.request.urlopen(url, timeout=10) as resp:
         data = json.load(resp)
@@ -277,7 +278,7 @@ def mc_win_prob(game: Dict, n_sims: int = 20000, k: int = 10, seed=42) -> Dict:
 def fetch_espn_wp() -> Optional[Dict]:
     """从ESPN summary API拉取他们的胜率"""
     try:
-        url = "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event=401859966"
+        url = "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event=401859967"
         with urllib.request.urlopen(url, timeout=5) as resp:
             data = json.load(resp)
         wp = data.get('winprobability', [])
